@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Tic-Tac-Toe: Player vs Computer | Classic Game</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: linear-gradient(145deg, #1a2a3a 0%, #0f1a24 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', 'Poppins', 'Inter', system-ui, -apple-system, 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    /* main game card */
+    .game-container {
+      max-width: 560px;
+      width: 100%;
+      background: rgba(22, 34, 48, 0.65);
+      backdrop-filter: blur(2px);
+      border-radius: 72px;
+      padding: 20px 24px 32px;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      transition: all 0.2s ease;
+    }
+
+    /* VS header area exactly like reference style */
+    .vs-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0e1c26;
+      padding: 14px 28px;
+      border-radius: 100px;
+      margin-bottom: 28px;
+      box-shadow: inset 0 2px 3px rgba(0,0,0,0.3), 0 6px 12px rgba(0,0,0,0.2);
+    }
+
+    .player-badge, .computer-badge {
+      font-weight: 800;
+      font-size: 1.8rem;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 0 #00000055;
+    }
+
+    .player-badge {
+      background: linear-gradient(135deg, #FFD966, #FFB347);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: none;
+      position: relative;
+    }
+
+    .computer-badge {
+      background: linear-gradient(135deg, #6bc6ff, #2d6ef7);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .vs-icon {
+      font-size: 2.2rem;
+      font-weight: 900;
+      background: #ff4d4d;
+      display: inline-block;
+      padding: 6px 18px;
+      border-radius: 60px;
+      color: white;
+      box-shadow: 0 4px 0 #861f1f;
+      transform: translateY(-2px);
+      letter-spacing: 1px;
+    }
+
+    /* LEVEL SELECTOR - exactly as described in images */
+    .level-panel {
+      background: #07121c;
+      border-radius: 48px;
+      padding: 12px 20px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      box-shadow: inset 0 1px 3px #2a4053, 0 8px 18px rgba(0,0,0,0.3);
+    }
+
+    .level-title {
+      font-weight: 600;
+      color: #bbd9ff;
+      font-size: 1.2rem;
+      background: #0f212f;
+      padding: 6px 18px;
+      border-radius: 40px;
+      letter-spacing: 1px;
+    }
+
+    .level-buttons {
+      display: flex;
+      gap: 18px;
+    }
+
+    .level-btn {
+      background: #1f3e4e;
+      border: none;
+      font-size: 1.6rem;
+      font-weight: bold;
+      font-family: monospace;
+      padding: 6px 20px;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: 0.1s linear;
+      color: #eef5ff;
+      box-shadow: 0 3px 0 #0a121c;
+    }
+
+    .level-btn.active {
+      background: #f5b042;
+      color: #1f2a2e;
+      box-shadow: 0 0 12px #ffbc6e;
+      border: 1px solid #ffdd99;
+    }
+
+    .level-btn:active {
+      transform: translateY(2px);
+      box-shadow: none;
+    }
+
+    /* game board 3x3 */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      background-color: #0d1c26;
+      padding: 20px;
+      border-radius: 58px;
+      margin-bottom: 28px;
+      box-shadow: inset 0 0 0 2px #2c4a60, 0 16px 28px black;
+    }
+
+    .cell {
+      aspect-ratio: 1 / 1;
+      background: #102b38;
+      border-radius: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 5.2rem;
+      font-weight: 800;
+      font-family: 'Segoe UI', 'Poppins', system-ui;
+      cursor: pointer;
+      transition: all 0.12s linear;
+      box-shadow: inset 0 -4px 0 #031016, 0 6px 12px rgba(0,0,0,0.3);
+      color: white;
+      text-shadow: 0 3px 0 #00000066;
+    }
+
+    .cell.X-move {
+      color: #ffbc6e;
+      text-shadow: 0 0 8px #ffaa33;
+    }
+
+    .cell.O-move {
+      color: #5bc0ff;
+      text-shadow: 0 0 6px #3e9eff;
+    }
+
+    .cell.win-glow {
+      background: radial-gradient(circle, #f5b04255, #ffa82b33);
+      box-shadow: 0 0 0 2px gold, inset 0 0 20px rgba(255,215,0,0.4);
+      transform: scale(0.98);
+    }
+
+    /* status and action */
+    .status-area {
+      background: #071520c9;
+      border-radius: 60px;
+      padding: 10px 24px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.35rem;
+      backdrop-filter: blur(8px);
+      color: #f0f9ff;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .turn-indicator {
+      background: #00000055;
+      padding: 6px 20px;
+      border-radius: 40px;
+      font-size: 1.2rem;
+    }
+
+    .reset-btn {
+      background: #dc2f2f;
+      border: none;
+      font-weight: bold;
+      padding: 8px 28px;
+      border-radius: 40px;
+      font-size: 1.1rem;
+      color: white;
+      cursor: pointer;
+      transition: 0.08s linear;
+      box-shadow: 0 4px 0 #751010;
+    }
+
+    .reset-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #751010;
+    }
+
+    .message {
+      background: #000000aa;
+      padding: 5px 14px;
+      border-radius: 28px;
+      font-weight: 500;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #7799bb;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 480px) {
+      .game-container {
+        padding: 12px 16px 24px;
+      }
+      .cell {
+        font-size: 3.4rem;
+      }
+      .vs-icon {
+        font-size: 1.4rem;
+        padding: 4px 12px;
+      }
+      .player-badge, .computer-badge {
+        font-size: 1.3rem;
+      }
+      .level-btn {
+        font-size: 1.2rem;
+        padding: 4px 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="game-container">
+  <!-- VS PLAYER / COMPUTER header (exactly like images) -->
+  <div class="vs-header">
+    <div class="player-badge">PLAYER</div>
+    <div class="vs-icon">VS</div>
+    <div class="computer-badge">COMPUTER</div>
+  </div>
+
+  <!-- SELECT LEVEL area with Q X and X O patterns as in reference 22275.jpg -->
+  <div class="level-panel">
+    <span class="level-title">SELECT LEVEL</span>
+    <div class="level-buttons">
+      <button data-diff="easy" class="level-btn" id="easyBtn">⭐ EASY</button>
+      <button data-diff="hard" class="level-btn active" id="hardBtn">🔥 HARD</button>
+    </div>
+  </div>
+
+  <!-- Tic Tac Toe grid -->
+  <div class="board" id="board">
+    <!-- 9 cells will be generated via JS -->
+  </div>
+
+  <div class="status-area">
+    <div class="turn-indicator" id="turnText">Your turn (X)</div>
+    <button class="reset-btn" id="resetGameBtn">⟳ NEW GAME</button>
+    <div class="message" id="winMessage"></div>
+  </div>
+  <footer>Player = X &nbsp;&nbsp;|&nbsp;&nbsp; Computer = O</footer>
+</div>
+
+<script>
+  // ----- GAME STATE ------
+  let boardState = ["", "", "", "", "", "", "", "", ""]; // 0-8
+  let gameActive = true;
+  let currentPlayer = "X";   // X always player, O always computer
+  let difficulty = "hard";    // 'easy' or 'hard'
+  
+  // DOM elements
+  const boardEl = document.getElementById("board");
+  const turnTextEl = document.getElementById("turnText");
+  const winMessageEl = document.getElementById("winMessage");
+  const resetBtn = document.getElementById("resetGameBtn");
+  const easyBtn = document.getElementById("easyBtn");
+  const hardBtn = document.getElementById("hardBtn");
+  
+  // win combinations (8 lines)
+  const winPatterns = [
+    [0,1,2], [3,4,5], [6,7,8],
+    [0,3,6], [1,4,7], [2,5,8],
+    [0,4,8], [2,4,6]
+  ];
+  
+  // Helper: update UI from boardState
+  function renderBoard() {
+    const cells = document.querySelectorAll(".cell");
+    for (let i = 0; i < cells.length; i++) {
+      const mark = boardState[i];
+      cells[i].innerText = mark;
+      if (mark === "X") {
+        cells[i].classList.add("X-move");
+        cells[i].classList.remove("O-move");
+      } else if (mark === "O") {
+        cells[i].classList.add("O-move");
+        cells[i].classList.remove("X-move");
+      } else {
+        cells[i].classList.remove("X-move", "O-move");
+      }
+      // remove any win glow before re-render (will reapply if winner line)
+      cells[i].classList.remove("win-glow");
+    }
+  }
+  
+  // highlight winning cells
+  function highlightWinningCells(winnerCombo) {
+    if (!winnerCombo) return;
+    const cells = document.querySelectorAll(".cell");
+    for (let idx of winnerCombo) {
+      if (cells[idx]) cells[idx].classList.add("win-glow");
+    }
+  }
+  
+  // check winner, return { winner: 'X'/'O'/null, combo: array/null }
+  function checkWinnerOnBoard(state) {
+    for (let pattern of winPatterns) {
+      const [a,b,c] = pattern;
+      if (state[a] && state[a] === state[b] && state[a] === state[c]) {
+        return { winner: state[a], combo: pattern };
+      }
+    }
+    return { winner: null, combo: null };
+  }
+  
+  // check if board full (draw)
+  function isBoardFull(state) {
+    return state.every(cell => cell !== "");
+  }
+  
+  // update status messages & game end handling
+  function updateGameStatus() {
+    const { winner, combo } = checkWinnerOnBoard(boardState);
+    if (winner === "X") {
+      gameActive = false;
+      turnTextEl.innerText = "🏆 YOU WIN! 🏆";
+      winMessageEl.innerText = "✨ Amazing! ✨";
+      highlightWinningCells(combo);
+      return;
+    } else if (winner === "O") {
+      gameActive = false;
+      turnTextEl.innerText = "🤖 COMPUTER WINS 🤖";
+      winMessageEl.innerText = "Better luck next time!";
+      highlightWinningCells(combo);
+      return;
+    } else if (isBoardFull(boardState)) {
+      gameActive = false;
+      turnTextEl.innerText = "DRAW! 🤝";
+      winMessageEl.innerText = "It's a tie!";
+      return;
+    }
+    
+    // game still active
+    winMessageEl.innerText = "";
+    if (currentPlayer === "X") {
+      turnTextEl.innerText = "🎮 Your turn (X)";
+    } else {
+      turnTextEl.innerText = "💻 Computer thinking (O) ...";
+    }
+  }
+  
+  // reset UI + board state
+  function resetGame() {
+    boardState = ["", "", "", "", "", "", "", "", ""];
+    gameActive = true;
+    currentPlayer = "X";   // player always starts first
+    // remove win glow, re-render clean
+    renderBoard();
+    // clear any extra glow via css
+    const cells = document.querySelectorAll(".cell");
+    cells.forEach(cell => cell.classList.remove("win-glow"));
+    turnTextEl.innerText = "🎮 Your turn (X)";
+    winMessageEl.innerText = "";
+    // If somehow computer starts? no, player starts. but ensure no pending moves
+  }
+  
+  // make a move on given index (if valid)
+  function makeMove(index, playerMark) {
+    if (!gameActive) return false;
+    if (boardState[index] !== "") return false;
+    if (playerMark !== currentPlayer) return false;
+    
+    // apply move
+    boardState[index] = playerMark;
+    renderBoard();
+    
+    // check game status after move
+    const { winner } = checkWinnerOnBoard(boardState);
+    if (winner || isBoardFull(boardState)) {
+      updateGameStatus();
+      return true; // move applied, game ended
+    }
+    
+    // switch player
+    currentPlayer = (currentPlayer === "X") ? "O" : "X";
+    updateGameStatus();
+    return true;
+  }
+  
+  // ----- AI SECTION (Easy / Hard) -----
+  // Easy: random empty cell (dumb but playful)
+  function getEasyMove() {
+    const emptyIndices = boardState.reduce((arr, cell, idx) => {
+      if (cell === "") arr.push(idx);
+      return arr;
+    }, []);
+    if (emptyIndices.length === 0) return null;
+    const randomIndex = Math.floor(Math.random() * emptyIndices.length);
+    return emptyIndices[randomIndex];
+  }
+  
+  // Hard AI: minimax algorithm (unbeatable)
+  function minimax(state, isMaximizing) {
+    const { winner } = checkWinnerOnBoard(state);
+    if (winner === "O") return 10;   // AI wins
+    if (winner === "X") return -10;  // Player wins
+    if (isBoardFull(state)) return 0;
+    
+    if (isMaximizing) {
+      let best = -Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (state[i] === "") {
+          state[i] = "O";
+          let score = minimax(state, false);
+          state[i] = "";
+          best = Math.max(score, best);
+        }
+      }
+      return best;
+    } else {
+      let best = Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (state[i] === "") {
+          state[i] = "X";
+          let score = minimax(state, true);
+          state[i] = "";
+          best = Math.min(score, best);
+        }
+      }
+      return best;
+    }
+  }
+  
+  function getHardMove() {
+    let bestScore = -Infinity;
+    let bestMove = null;
+    for (let i = 0; i < 9; i++) {
+      if (boardState[i] === "") {
+        // simulate AI move (O)
+        boardState[i] = "O";
+        let score = minimax(boardState, false);
+        boardState[i] = "";
+        if (score > bestScore) {
+          bestScore = score;
+          bestMove = i;
+        }
+      }
+    }
+    return bestMove;
+  }
+  
+  // computer move dispatcher
+  function computerMove() {
+    if (!gameActive) return;
+    if (currentPlayer !== "O") return;
+    
+    let moveIndex = null;
+    if (difficulty === "easy") {
+      moveIndex = getEasyMove();
+    } else {
+      moveIndex = getHardMove();
+    }
+    
+    // if there is a valid move, execute it with slight delay for natural feel
+    if (moveIndex !== null && boardState[moveIndex] === "") {
+      setTimeout(() => {
+        // re-check game state & current player after delay (avoid overlapping moves)
+        if (gameActive && currentPlayer === "O" && boardState[moveIndex] === "") {
+          makeMove(moveIndex, "O");
+          // after computer move, if game still active & currentPlayer turned to X, fine
+        }
+      }, 70);
+    } else {
+      // fallback if no move possible (draw condition might be reached but check anyway)
+      if (isBoardFull(boardState)) {
+        updateGameStatus();
+      }
+    }
+  }
+  
+  // wrapper to handle player move + trigger AI
+  function handlePlayerMove(cellIndex) {
+    if (!gameActive) return;
+    if (currentPlayer !== "X") return;
+    const success = makeMove(cellIndex, "X");
+    if (success) {
+      // after move, if game still active and currentPlayer is now O, call computer
+      if (gameActive && currentPlayer === "O") {
+        computerMove();
+      } else {
+        // update status if game ended after player move
+        updateGameStatus();
+      }
+    }
+  }
+  
+  // create board UI and attach events
+  function buildBoardUI() {
+    boardEl.innerHTML = "";
+    for (let i = 0; i < 9; i++) {
+      const cell = document.createElement("div");
+      cell.classList.add("cell");
+      cell.setAttribute("data-index", i);
+      cell.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const idx = parseInt(cell.getAttribute("data-index"));
+        handlePlayerMove(idx);
+      });
+      boardEl.appendChild(cell);
+    }
+    renderBoard();
+  }
+  
+  // difficulty switching (reset game + update mode)
+  function setDifficulty(level) {
+    difficulty = level;
+    if (level === "easy") {
+      easyBtn.classList.add("active");
+      hardBtn.classList.remove("active");
+    } else {
+      hardBtn.classList.add("active");
+      easyBtn.classList.remove("active");
+    }
+    resetGame();
+    // extra reset to ensure board fresh and no ai pending
+    // after reset player always starts
+  }
+  
+  // event binding for level buttons
+  easyBtn.addEventListener("click", () => {
+    if (difficulty === "easy") return;
+    setDifficulty("easy");
+  });
+  hardBtn.addEventListener("click", () => {
+    if (difficulty === "hard") return;
+    setDifficulty("hard");
+  });
+  
+  resetBtn.addEventListener("click", () => {
+    resetGame();
+    // if computer turn somehow? no, reset forces X turn.
+    // any pending AI timeouts will be harmless because gameActive updated + board empty
+  });
+  
+  // initial setup
+  function init() {
+    buildBoardUI();
+    resetGame();
+    // default difficulty hard is set active, no need extra
+    // safety: if accidentally computer turn? reset sets currentPlayer = X
+    // perfect
+  }
+  
+  init();
+  
+  // additional safeguard: if computer tries to move on game end after reset, it checks gameActive
+  // also handle if user clicks rapidly while AI thinking: boardState index validation blocks double moves
+  // perfect
+</script>
+</body>
+</html>
